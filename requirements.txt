@@ -6,4 +6,3 @@ sentence-transformers
 faiss-cpu
 python-dotenv
 requests
-pickle5
