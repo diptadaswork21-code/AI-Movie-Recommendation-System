@@ -3,6 +3,13 @@
 An AI-powered movie recommendation system using semantic search, collaborative filtering, and hybrid recommendation techniques.
 
 ---
+## 🌐 Live Demo
+
+Try the application here:
+
+[AI Movie Recommendation System](https://ai-movie-recommendation-system-9zmypcrnp7etambwpmwmmc.streamlit.app/)
+
+---
 
 ## 🚀 Features
 
