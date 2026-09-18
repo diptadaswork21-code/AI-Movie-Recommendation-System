@@ -1,37 +1,52 @@
 # 🎬 AI Movie Recommendation System
 
-An AI-powered movie recommendation system using semantic search, collaborative filtering, and hybrid recommendation techniques.
+An AI-powered movie recommendation system that combines **semantic search, collaborative filtering, and hybrid ranking** to recommend movies based on natural language user preferences.
+
+The system understands user queries like:
+
+> "A dark psychological thriller with crime investigation"
+
+and recommends relevant movies using Machine Learning and Natural Language Processing techniques.
 
 ---
-## 🌐 Live Demo
 
-Try the application here:
+# 🌐 Live Demo
+
+Try the deployed application:
 
 [AI Movie Recommendation System](https://ai-movie-recommendation-system-9zmypcrnp7etambwpmwmmc.streamlit.app/)
 
 ---
 
-## 🚀 Features
+# 🚀 Features
 
-- AI semantic movie search using Sentence Transformers
+- AI-powered semantic movie search
+- Sentence Transformer based text embeddings
 - FAISS vector similarity search
 - MovieLens collaborative filtering
-- Hybrid recommendation model
+- Hybrid recommendation ranking
 - TMDB API integration
 - Movie posters, ratings, and descriptions
-- Explainable AI recommendations
-- Interactive Streamlit interface
+- Explainable recommendation output
+- Interactive Streamlit web application
 
 ---
 
-## 🏗️ System Architecture
+# 🏗️ System Architecture
 
-```
+The complete recommendation pipeline:
+
+```text
 User Query
 
 ↓
 
-Sentence Transformer Embedding
+Sentence Transformer
+(all-MiniLM-L6-v2)
+
+↓
+
+Text Embedding Vector
 
 ↓
 
@@ -39,42 +54,74 @@ FAISS Semantic Search
 
 ↓
 
-MovieLens Rating Similarity
+Candidate Movie Retrieval
 
 ↓
 
-Hybrid Ranking
+MovieLens Collaborative Filtering
 
 ↓
 
-TMDB Movie Information
+Hybrid Ranking Model
 
 ↓
 
-Streamlit Application
+TMDB API
+
+↓
+
+Streamlit Web Application
 ```
+
+Detailed architecture:
+
+[View Architecture Diagram](docs/architecture.md)
 
 ---
 
-## 🧠 Recommendation Approach
+# 🧠 Recommendation Approach
 
-The system combines three recommendation techniques:
+The system combines three major recommendation techniques.
 
-### 1. Content-Based Filtering
+---
 
-The system analyzes movie information such as titles, genres, and descriptions to understand the user's natural language preference.
+## 1. Content-Based Filtering
 
-Sentence Transformer converts text information into numerical embeddings, allowing semantic similarity search.
+The system uses movie information such as:
 
-### 2. Collaborative Filtering
+- Movie titles
+- Genres
+- Semantic meaning of user queries
 
-The system uses MovieLens user rating patterns to identify relationships between movies based on user preferences.
+Sentence Transformer converts text into numerical embeddings.
 
-Movies liked by similar users influence the final recommendation ranking.
+FAISS then finds movies with similar semantic meaning.
 
-### 3. Hybrid Recommendation
+Example:
 
-The final recommendation score combines semantic similarity and rating similarity:
+User:
+
+```
+space adventure with astronauts
+```
+
+The model searches for movies with similar concepts.
+
+---
+
+## 2. Collaborative Filtering
+
+The system uses MovieLens user rating data.
+
+Movie-to-movie similarity is calculated based on user rating patterns.
+
+Movies that receive similar ratings from users are considered related.
+
+---
+
+## 3. Hybrid Recommendation
+
+The final ranking combines:
 
 ```
 Final Score =
@@ -86,86 +133,140 @@ Final Score =
 0.4 × Rating Similarity
 ```
 
-Semantic similarity helps understand the user's query, while rating similarity improves personalization using historical user behavior.
+Semantic similarity helps understand the user's intent.
+
+Collaborative filtering improves recommendations using historical user preferences.
 
 ---
 
-## 🛠️ Technologies Used
+# 🛠️ Technologies Used
+
+## Programming
 
 - Python
-- Streamlit
+
+## Machine Learning
+
+- Scikit-learn
 - Sentence Transformers
 - FAISS
-- Scikit-learn
-- MovieLens Dataset
-- TMDB API
+
+## Data Processing
+
 - Pandas
 - NumPy
 
+## Deployment
+
+- Streamlit
+
+## External API
+
+- TMDB API
+
+## Dataset
+
+- MovieLens Dataset
+
 ---
 
-## 📂 Project Structure
+# 📂 Project Structure
 
-```
-movie-recommendation-ai/
+```text
+AI-Movie-Recommendation-System
 
 │
-├── app/
+├── app
 │   └── app.py
 │
-├── models/
+├── data
+│   ├── movies.csv
+│   └── ratings.csv
+│
+├── models
 │   ├── movie_embeddings.index
-│   ├── movies.pkl
-│   └── movie_similarity_rating.pkl
+│   ├── movie_embeddings.pkl
+│   ├── movie_similarity_top50.pkl
+│   └── movies.pkl
 │
-├── data/
+├── notebooks
+│   └── 01_movie_recommendation_basics.ipynb
 │
-├── notebooks/
+├── screenshots
+│   ├── homepage.png
+│   └── recommendation_result.png
 │
-├── requirements.txt
+├── docs
+│   └── architecture.md
 │
 ├── README.md
-│
-└── .gitignore
+└── requirements.txt
 ```
 
 ---
 
-## ⚙️ How It Works
+# ⚙️ How It Works
 
-1. User enters a natural language movie preference.
+1. User enters a movie preference in natural language.
+
 2. Sentence Transformer converts the query into an embedding vector.
-3. FAISS performs semantic similarity search to find relevant movies.
-4. MovieLens rating similarity adjusts recommendations based on user behavior.
-5. Hybrid ranking generates the final recommendation list.
-6. TMDB API provides movie posters, ratings, and descriptions.
-7. The Streamlit interface displays the recommended movies.
+
+3. FAISS searches the most semantically similar movies.
+
+4. Collaborative filtering calculates movie relationship based on ratings.
+
+5. Hybrid ranking combines both scores.
+
+6. TMDB API retrieves:
+
+- Movie poster
+- Rating
+- Description
+
+7. Streamlit displays the final recommendations.
 
 ---
 
-## ▶️ Installation & Usage
+# 📸 Application Screenshots
 
-### 1. Clone the Repository
+## Home Interface
+
+![Home Page](screenshots/homepage.png)
+
+
+## Recommendation Result
+
+![Recommendation Result](screenshots/recommendation_result.png)
+
+---
+
+# 📦 Installation
+
+Clone the repository:
 
 ```bash
-git clone your-repository-url
+git clone https://github.com/diptadaswork21-code/AI-Movie-Recommendation-System.git
 ```
 
-### 2. Install Dependencies
+Move into project directory:
+
+```bash
+cd AI-Movie-Recommendation-System
+```
+
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Add TMDB API Key
+Create `.env` file:
 
-Create a `.env` file in the project root:
-
-```
+```env
 TMDB_API_KEY=your_api_key_here
 ```
 
-### 4. Run the Application
+Run application:
 
 ```bash
 streamlit run app/app.py
@@ -173,40 +274,22 @@ streamlit run app/app.py
 
 ---
 
-## 🎯 Application Features
+# 🔮 Future Improvements
 
-The application allows users to:
-
-- Search movies using natural language descriptions
-- Adjust AI similarity and rating influence
-- Select the number of recommendations
-- Filter movies based on minimum rating
-- View movie posters, ratings, and descriptions
-- Understand why a movie was recommended through explainable AI feedback
+- Personalized user profiles
+- User watch history integration
+- Movie trailer recommendation
+- Deep learning recommendation models
+- Recommendation evaluation using Precision@K and Recall@K
+- Cloud database integration
 
 ---
 
-## 🔮 Future Improvements
+# 👨‍💻 Author
 
-- User profile-based recommendations
-- Personalized recommendation history
-- Advanced deep learning recommendation models
-- Model evaluation using Precision@K and NDCG
-- Cloud deployment
-- Continuous learning from user feedback
+Developed using:
 
----
-
-## 📸 Application Screenshots
-
-### 🏠 Home Interface
-
-![Home Page](screenshots/homepage.png)
-
-
-### 🎬 Recommendation Results
-
-![Recommendation Results](screenshots/recommendation_result.png)
-## 👨‍💻 Author
-
-AI Movie Recommendation System developed using Python, Machine Learning, Natural Language Processing, and Recommendation System techniques.
+- Machine Learning
+- Natural Language Processing
+- Recommendation Systems
+- AI Application Development
