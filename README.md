@@ -190,6 +190,16 @@ The application allows users to:
 
 ---
 
+## 📸 Application Screenshots
+
+### 🏠 Home Interface
+
+![Home Page](screenshots/homepage.png)
+
+
+### 🎬 Recommendation Results
+
+![Recommendation Results](screenshots/recommendation_result.png)
 ## 👨‍💻 Author
 
 AI Movie Recommendation System developed using Python, Machine Learning, Natural Language Processing, and Recommendation System techniques.
