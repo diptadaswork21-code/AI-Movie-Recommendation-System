@@ -17,10 +17,7 @@ The system analyzes the request using Gemini AI, creates a richer semantic repre
 
 # 🚀 Live Demo
 
-Streamlit Application:
-
-(Add your Streamlit URL here)
-
+[Open CineMaya AI Demo](https://ai-movie-recommendation-system-9zmypcrnp7etambwpmwmmc.streamlit.app/)
 
 ---
 
@@ -315,15 +312,19 @@ streamlit run app/app.py
 # 📸 Screenshots
 
 
-(Add screenshots here)
+## Home Page
 
-Examples:
-
-- Home page
-- AI Understanding panel
-- Recommendation results
+![CineMaya AI Home Page](screenshots/homepage.png)
 
 
+## AI Understanding Panel
+
+![AI Understanding](screenshots/ai_understanding.png)
+
+
+## Recommendation Results
+
+![Recommendation Results](screenshots/recommendation_result.png)
 ---
 
 # 🔮 Future Improvements
