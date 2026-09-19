@@ -1,11 +1,40 @@
-# 🎬 AI Movie Recommendation System Architecture
+# 🎬 CineMaya AI Architecture
 
+## Overview
 
-## Overall Pipeline
+CineMaya AI is an AI-powered hybrid movie recommendation system that combines Generative AI, semantic search, and collaborative filtering to recommend movies based on natural language preferences.
+
+The system understands user intent using Gemini AI, finds semantically similar movies using Sentence Transformers and FAISS, then improves ranking using MovieLens rating similarity.
+
+---
+
+# Overall Pipeline
 
 
 ```
                     User Input
+
+Example:
+"A space movie with emotional story"
+
+                        |
+
+                        ↓
+
+
+          Gemini AI Query Understanding Layer
+
+              - Genre extraction
+              - Mood detection
+              - Theme identification
+              - Keyword generation
+
+                        |
+
+                        ↓
+
+
+              Enhanced Semantic Query
 
                         |
 
@@ -21,7 +50,7 @@
                         ↓
 
 
-             Text Embedding Vector
+              Text Embedding Vector
 
                         |
 
@@ -37,14 +66,14 @@
                         ↓
 
 
-            Top Candidate Movies
+             Top Candidate Movies
 
                         |
 
                         ↓
 
 
-       MovieLens Collaborative Filtering
+        MovieLens Collaborative Filtering
 
           (Movie Rating Similarity)
 
@@ -53,10 +82,10 @@
                         ↓
 
 
-             Hybrid Ranking Model
+              Hybrid Ranking Model
 
 
-       Semantic Score + Rating Score
+      Semantic Similarity + Rating Similarity
 
 
                         |
@@ -75,7 +104,7 @@
                         ↓
 
 
-              Streamlit Web App
+              Streamlit Web Application
 
 ```
 
@@ -84,80 +113,194 @@
 # Model Components
 
 
-## 1. Sentence Transformer
+## 1. Gemini AI Query Understanding Layer
 
 Purpose:
 
-Convert natural language movie preferences into numerical embeddings.
+Convert natural language movie preferences into meaningful search information.
 
 Example:
 
 Input:
 
 ```
-space adventure with astronauts
+A space movie with emotional story
 ```
 
-Output:
+Gemini extracts:
 
-Embedding vector representing the meaning of the query.
+```
+Genre:
+Science Fiction, Drama
 
+Mood:
+Emotional, Thought-provoking
+
+Themes:
+Space exploration, human connection
+
+Keywords:
+Astronaut, deep space, survival
+```
+
+The generated semantic query improves the quality of vector search by providing richer contextual information.
 
 ---
 
-## 2. FAISS Vector Search
+# 2. Sentence Transformer
+
+Model:
+
+```
+all-MiniLM-L6-v2
+```
 
 Purpose:
 
-Perform fast similarity search between user query embeddings and movie embeddings.
+Convert the enhanced movie description into numerical embeddings.
 
-The system retrieves the most relevant movies from the embedding database.
-
+The embedding captures the semantic meaning of the user's preference and allows comparison between user queries and movie descriptions.
 
 ---
 
-## 3. Collaborative Filtering
+# 3. FAISS Vector Search
 
 Purpose:
 
-Use MovieLens rating behavior to understand relationships between movies.
+Perform fast similarity search between:
+
+- User query embedding
+- Movie embedding database
+
+
+FAISS retrieves the most relevant candidate movies based on semantic similarity.
+
+---
+
+# 4. Collaborative Filtering
+
+Purpose:
+
+Use MovieLens user rating behaviour to identify relationships between movies.
 
 Movies with similar user rating patterns receive higher similarity scores.
 
+This provides a user preference signal in addition to content understanding.
 
 ---
 
-## 4. Hybrid Ranking
+# 5. Hybrid Recommendation Engine
 
-The final recommendation score combines:
+The final recommendation score combines two signals:
 
 ```
 Final Score =
 
-Semantic Similarity × 0.6
+Semantic Similarity × AI Weight
 
 +
 
-Rating Similarity × 0.4
+Rating Similarity × (1 - AI Weight)
+
 ```
 
-This balances user intent and historical preference patterns.
+## Semantic Similarity
 
+Represents:
+
+- User intent matching
+- Movie concept similarity
+- Theme relevance
+
+
+## Rating Similarity
+
+Represents:
+
+- Historical user preference patterns
+- Similar movie interactions
+
+
+The hybrid approach balances AI understanding with collaborative filtering.
 
 ---
 
-## 5. TMDB Integration
+# 6. TMDB Integration
 
-TMDB API provides:
+TMDB API provides additional movie information:
 
 - Movie posters
 - Ratings
-- Movie descriptions
+- Descriptions
 
 
 ---
 
-## Deployment Flow
+# 7. Explainable Recommendation System
+
+CineMaya AI provides reasoning behind recommendations.
+
+Examples:
+
+- Strong match with your movie description
+- Similar viewers showed interest in related movies
+- Recommended through AI similarity and user preference patterns
+
+
+The system also displays:
+
+- AI relevance score
+- Semantic similarity score
+- User preference signal
+
+---
+
+# 8. Streamlit Application
+
+The frontend provides:
+
+- Natural language movie search
+- Gemini AI understanding display
+- Movie recommendations
+- Explainable recommendation reasons
+- Interactive controls for recommendation settings
+
+
+---
+
+# Technology Stack
+
+
+## Generative AI
+
+- Google Gemini API
+
+
+## Machine Learning
+
+- Sentence Transformers
+- FAISS
+- Collaborative Filtering
+
+
+## Backend
+
+- Python
+
+
+## Frontend
+
+- Streamlit
+
+
+## External API
+
+- TMDB API
+
+
+---
+
+# Deployment Flow
 
 
 ```
@@ -173,6 +316,18 @@ Streamlit Cloud
 
         ↓
 
-Live AI Recommendation Application
+Live CineMaya AI Application
 
 ```
+
+---
+
+# Future Improvements
+
+Possible future upgrades:
+
+- User authentication
+- Personal recommendation history
+- More advanced ranking models
+- Conversation-based movie assistant
+- Multi-language movie search

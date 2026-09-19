@@ -6,22 +6,21 @@ import os
 
 from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
+import google.generativeai as genai
 
-
-# ==========================
+# =========================
 # Page Configuration
-# ==========================
+# =========================
 
 st.set_page_config(
-    page_title="AI Movie Recommendation",
-    page_icon="🎬",
+    page_title="CineMaya AI",
     layout="wide"
 )
 
 
-# ==========================
-# Load API Key
-# ==========================
+# =========================
+# Load Environment
+# =========================
 
 load_dotenv()
 
@@ -29,11 +28,23 @@ TMDB_KEY = os.getenv(
     "TMDB_API_KEY"
 )
 
+GEMINI_KEY = os.getenv(
+    "GEMINI_API_KEY"
+)
 
 
-# ==========================
-# Load Resources
-# ==========================
+genai.configure(
+    api_key=GEMINI_KEY
+)
+
+
+gemini_model = genai.GenerativeModel(
+    "gemini-3.6-flash"
+)
+
+# =========================
+# Load Models
+# =========================
 
 @st.cache_resource
 def load_resources():
@@ -55,7 +66,6 @@ def load_resources():
         movies = pickle.load(f)
 
 
-    # NEW compressed similarity file
     with open(
         "models/movie_similarity_top50.pkl",
         "rb"
@@ -63,7 +73,12 @@ def load_resources():
         movie_similarity = pickle.load(f)
 
 
-    return model, index, movies, movie_similarity
+    return (
+        model,
+        index,
+        movies,
+        movie_similarity
+    )
 
 
 
@@ -71,9 +86,9 @@ model, index, movies, movie_similarity = load_resources()
 
 
 
-# ==========================
-# Clean MovieLens Title
-# ==========================
+# =========================
+# Title Formatting
+# =========================
 
 def clean_title(title):
 
@@ -111,15 +126,75 @@ def clean_title(title):
 
 
 
+def format_display_title(title):
 
-# ==========================
-# TMDB Details
-# ==========================
+    year = ""
+
+    if "(" in title and ")" in title:
+
+        year = title[
+            title.find("("):
+            title.find(")") + 1
+        ]
+
+
+    return clean_title(title) + " " + year
+
+def format_genres(genres):
+
+    if "|" in genres:
+        return genres.replace("|", ", ")
+
+    return ", ".join(genres.split())
+
+def enhance_query(query):
+
+    try:
+
+        prompt = f"""
+You are a movie recommendation assistant.
+
+Analyze the user movie preference.
+
+Extract:
+
+Genre:
+Mood:
+Themes:
+Keywords:
+
+Then create a concise semantic search query.
+
+User preference:
+
+{query}
+"""
+
+
+        response = gemini_model.generate_content(
+            prompt
+        )
+
+
+        return response.text
+
+
+    except Exception as e:
+
+        st.warning(
+            "AI enhancement unavailable. Using direct search."
+        )
+
+        return query
+
+# =========================
+# TMDB API
+# =========================
 
 @st.cache_data
 def get_movie_details(title):
 
-    title = clean_title(title)
+    search_title = clean_title(title)
 
 
     url = (
@@ -131,7 +206,7 @@ def get_movie_details(title):
 
         "api_key": TMDB_KEY,
 
-        "query": title
+        "query": search_title
 
     }
 
@@ -147,11 +222,12 @@ def get_movie_details(title):
 
     placeholder = (
         "https://via.placeholder.com/"
-        "150x220?text=No+Poster"
+        "300x450?text=No+Poster"
     )
 
 
     if data.get("results"):
+
 
         movie = data["results"][0]
 
@@ -161,11 +237,13 @@ def get_movie_details(title):
 
         if movie.get("poster_path"):
 
+
             poster = (
-                "https://image.tmdb.org/t/p/w500/"
+                "https://image.tmdb.org/t/p/w500"
                 +
                 movie["poster_path"]
             )
+
 
 
         rating = movie.get(
@@ -180,7 +258,11 @@ def get_movie_details(title):
         )
 
 
-        return poster, rating, overview
+        return (
+            poster,
+            rating,
+            overview
+        )
 
 
 
@@ -192,17 +274,16 @@ def get_movie_details(title):
 
 
 
-
-
-# ==========================
+# =========================
 # Hybrid Recommendation
-# ==========================
+# =========================
 
 def hybrid_recommend(
     query,
     n=10,
     ai_weight=0.6
 ):
+
 
     query_vector = model.encode(
         [query]
@@ -215,8 +296,7 @@ def hybrid_recommend(
     )
 
 
-    recommendation_data = []
-
+    results = []
 
 
     for movie_index, distance in zip(
@@ -230,7 +310,6 @@ def hybrid_recommend(
         )
 
 
-        # New compressed similarity handling
         similar_movies = movie_similarity.get(
             movie_index,
             []
@@ -239,10 +318,12 @@ def hybrid_recommend(
 
         if len(similar_movies) > 0:
 
+
             rating_score = sum(
                 score
                 for _, score in similar_movies
             ) / len(similar_movies)
+
 
         else:
 
@@ -256,74 +337,63 @@ def hybrid_recommend(
 
             +
 
-            (1 - ai_weight) * rating_score
+            (1-ai_weight) * rating_score
 
         )
 
 
-
-        recommendation_data.append(
+        results.append(
 
             {
-                "movie_index": movie_index,
-                "semantic_score": semantic_score,
-                "rating_score": rating_score,
-                "match_score": final_score
+
+                "index": movie_index,
+
+                "semantic": semantic_score,
+
+                "rating": rating_score,
+
+                "score": final_score
+
             }
 
         )
 
 
 
-    recommendation_data = sorted(
-        recommendation_data,
-        key=lambda x: x["match_score"],
+    results = sorted(
+
+        results,
+
+        key=lambda x:x["score"],
+
         reverse=True
+
     )
 
 
-
-    selected = recommendation_data[:n]
-
+    selected = results[:n]
 
 
     movie_indices = [
 
-        x["movie_index"]
+        x["index"]
 
         for x in selected
 
     ]
 
 
+    output = movies.iloc[
 
-    result = movies.iloc[
         movie_indices
+
     ].copy()
 
 
 
-    result["semantic_score"] = [
+    output["match_score"] = [
 
-        x["semantic_score"]
-
-        for x in selected
-
-    ]
-
-
-    result["rating_score"] = [
-
-        x["rating_score"]
-
-        for x in selected
-
-    ]
-
-
-    result["match_score"] = [
-
-        x["match_score"]
+        x["score"]
 
         for x in selected
 
@@ -331,111 +401,196 @@ def hybrid_recommend(
 
 
 
-    return result
+    output["semantic_score"] = [
+
+        x["semantic"]
+
+        for x in selected
+
+    ]
 
 
 
+    output["rating_score"] = [
+
+        x["rating"]
+
+        for x in selected
+
+    ]
 
 
-# ==========================
+
+    return output
+
+
+
+# =========================
 # Explanation
-# ==========================
+# =========================
 
-def generate_explanation(movie):
+def explanation(movie):
 
     reasons = []
 
 
-    if movie["semantic_score"] > 0.4:
+    semantic_score = movie["semantic_score"]
+    rating_score = movie["rating_score"]
+
+
+    # Semantic AI match
+    if semantic_score >= 0.5:
 
         reasons.append(
-            "Strong match with your description"
+            "Strong match with your movie description"
+        )
+
+    elif semantic_score >= 0.3:
+
+        reasons.append(
+            "Matches the themes and concepts you requested"
         )
 
 
-    if movie["rating_score"] > 0.05:
+    # User preference similarity
+    if rating_score >= 0.15:
 
         reasons.append(
-            "Similar users rated this movie positively"
+            "Similar viewers showed strong interest in related movies"
+        )
+
+    elif rating_score >= 0.05:
+
+        reasons.append(
+            "Related movies received positive user ratings"
         )
 
 
-    if len(reasons) == 0:
+    # Overall recommendation reason
+    if semantic_score > 0.4 and rating_score > 0.1:
 
         reasons.append(
-            "Recommended based on AI similarity"
+            "Recommended through a combination of AI understanding and user preference patterns"
+        )
+
+
+    if not reasons:
+
+        reasons.append(
+            "Recommended through semantic AI similarity"
         )
 
 
     return reasons
 
 
-
-
-# ==========================
+# =========================
 # Sidebar
-# ==========================
+# =========================
 
 st.sidebar.title(
-    "⚙️ Recommendation Settings"
+    "Settings"
 )
 
 
+number_movies = st.sidebar.slider(
 
-num_recommendations = st.sidebar.slider(
-    "Number of Recommendations",
+    "Number of recommendations",
+
     5,
+
     20,
+
     10
+
 )
 
 
 
 ai_weight = st.sidebar.slider(
-    "AI Similarity Weight",
+
+    "Semantic AI Weight",
+
     0.0,
+
     1.0,
+
     0.6,
+
     0.1
+
 )
 
-
-
-minimum_rating = st.sidebar.slider(
-    "Minimum TMDB Rating",
-    0.0,
-    10.0,
-    0.0,
-    0.5
-)
-
-
-
-
-# ==========================
-# Main UI
-# ==========================
+# =========================
+# Main Interface
+# =========================
 
 st.title(
-    "🎬 AI Movie Recommendation System"
+    "CineMaya AI"
 )
+
+
+st.caption(
+    "Discover movies with Cinemaya"
+)
+
 
 
 st.write(
-    "Describe the movie you want and AI will recommend similar movies."
+    "Describe your movie preference and CineMaya AI will find similar movies."
 )
 
 
 
-query = st.text_input(
-    "🔍 Movie Preference",
-    placeholder="Example: space adventure with astronauts"
+st.markdown(
+
+    """
+    <div style="
+    background-color:#1f2937;
+    padding:18px;
+    border-radius:12px;
+    ">
+
+    <h4 style="color:#60a5fa;">
+    Example query
+    </h4>
+
+    <p>
+    Romantic comedy from the 2000s
+    </p>
+
+    </div>
+
+    """,
+
+    unsafe_allow_html=True
+
 )
 
 
 
-if st.button("Recommend"):
+# =========================
+# Search
+# =========================
 
+with st.form(
+    "search_form"
+):
+
+
+    query = st.text_input(
+        "Your movie preference"
+    )
+
+
+    submit = st.form_submit_button(
+        "Recommend Movies"
+    )
+
+
+
+
+if submit:
 
     if query.strip() == "":
 
@@ -443,15 +598,35 @@ if st.button("Recommend"):
             "Please enter a movie preference."
         )
 
-
     else:
 
-
-        results = hybrid_recommend(
-            query,
-            n=num_recommendations,
-            ai_weight=ai_weight
+        enhanced_query = enhance_query(
+            query
         )
+
+
+        with st.expander(
+            "CineMaya AI Analysis"
+        ):
+
+            st.write(
+                enhanced_query
+            )
+
+
+        with st.spinner(
+            "CineMaya AI is finding the best movies..."
+        ):
+
+            results = hybrid_recommend(
+
+                enhanced_query,
+
+                n=number_movies,
+
+                ai_weight=ai_weight
+
+            )
 
 
         st.subheader(
@@ -459,55 +634,67 @@ if st.button("Recommend"):
         )
 
 
-        max_score = results[
-            "match_score"
-        ].max()
+        max_score = float(
+
+            results["match_score"].max()
+
+        )
 
 
 
         for _, movie in results.iterrows():
 
 
+
             poster, rating, overview = get_movie_details(
+
                 movie["title"]
+
             )
 
 
-            if rating != "N/A":
 
-                if float(rating) < minimum_rating:
+            match = round(
 
-                    continue
+                float(
 
+                    (
 
+                        movie["match_score"]
 
-            match_percentage = round(
+                        /
 
-                (
-                    movie["match_score"]
-                    /
-                    max_score
-                )
-                *
-                100,
+                        max_score
 
-                2
+                    )
+
+                    * 100
+
+                ),
+
+                1
 
             )
 
 
 
             col1, col2 = st.columns(
-                [1, 4]
+
+                [1,4]
+
             )
 
 
 
             with col1:
 
+
                 st.image(
+
                     poster,
-                    width=180
+
+                    width=170
+
                 )
 
 
@@ -516,60 +703,114 @@ if st.button("Recommend"):
 
 
                 st.markdown(
-                    f"## 🎬 {movie['title']}"
+
+                    f"## {format_display_title(movie['title'])}"
+
                 )
 
 
                 st.write(
-                    "🎭 Genre:",
-                    movie["genres"]
+
+                    "Genre:",
+
+                    format_genres(movie["genres"])
+
                 )
 
 
 
                 if rating != "N/A":
 
+
                     rating = round(
+
                         float(rating),
+
                         1
+
                     )
 
 
 
                 st.write(
-                    "⭐ Rating:",
+
+                    "Rating:",
+
                     rating
+
                 )
+
+
+
+                st.progress(
+
+                    float(match/100)
+
+                )
+
 
 
                 st.write(
-                    "🤖 AI Match:",
-                    str(match_percentage)
-                    +
-                    "%"
+
+                    f"AI Relevance Score: {match}%"
+
+                )
+
+                semantic_percentage = round(
+                   float(movie["semantic_score"]) * 100,
+                   1
                 )
 
 
+                rating_percentage = round(
+                   float(movie["rating_score"]) * 100,
+                   1
+                )
+
+
+                with st.expander("Score Breakdown"):
+
+                  st.write(
+                      f"Semantic Understanding: {semantic_percentage}%"
+
+                  )
+
+                  st.write(
+                      f"User Preference Signal: {rating_percentage}%"
+
+                  )
 
                 st.write(
-                    "💡 Why recommended?"
+
+                    "Why recommended:"
+
                 )
 
 
 
-                for reason in generate_explanation(movie):
+                for item in explanation(movie):
+
 
                     st.write(
-                        "✓",
-                        reason
+
+                        "•",
+
+                        item
+
                     )
 
 
 
                 st.write(
+
                     overview
+
                 )
 
 
 
             st.divider()
+
+    st.caption(
+        "CineMaya AI | Built with Gemini, Sentence Transformers, FAISS and Streamlit"
+    )      
